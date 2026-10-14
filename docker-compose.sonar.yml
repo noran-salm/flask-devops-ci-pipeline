@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: P@ssword
+      POSTGRES_DB: sonar
+    volumes: ["db_data:/var/lib/postgresql/data"]
+  sonarqube:
+    image: sonarqube:lts-community
+    ports: ["9000:9000"]
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: P@ssword
+volumes:
+  db_data:
