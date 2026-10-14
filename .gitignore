@@ -1,6 +1,23 @@
-venv/
-.venv/
-env/
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfplan
+
+# Sensitive variables
+*.tfvars
+!example.tfvars
+
+# Python
 __pycache__/
-*.pyc
-.pytest_cache/
+*.py[cod]
+.venv/
+venv/
+
+# Node.js
+node_modules/
+
+# Logs
+*.log
