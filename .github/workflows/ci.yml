@@ -30,7 +30,7 @@ jobs:
       # 4. Run Pytest
       - name: Run Pytest
         run: |
-          pytest
+          pytest -v
 
       # 5. Run SonarQube Analysis
       - name: SonarQube Scan
