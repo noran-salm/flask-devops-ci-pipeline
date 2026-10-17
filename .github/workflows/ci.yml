@@ -1,8 +1,10 @@
 name: CI Quality Gates
 
 on:
+  push:
+    branches: [ main, "feature/**" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   quality-gate:
@@ -32,19 +34,6 @@ jobs:
         run: |
           pytest -v
 
-      # 5. Run SonarQube Analysis
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v2.0.2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }} 
-          
-      # 6. Quality Gate Check 
-      - name: SonarQube Quality Gate Check
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       # Build Docker Image
       - name: Build Docker Image
@@ -61,4 +50,18 @@ jobs:
           exit-code: '1'        
           ignore-unfixed: true    
           vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'          
+          severity: 'CRITICAL,HIGH'                   
+
+      # 5. Run SonarQube Analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2.0.2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }} 
+          
+      # 6. Quality Gate Check 
+      - name: SonarQube Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
