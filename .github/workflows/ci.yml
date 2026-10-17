@@ -45,3 +45,20 @@ jobs:
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t flask-app:${{ github.sha }} .
+          docker tag flask-app:${{ github.sha }} flask-app:latest
+
+      # Scan Image with Trivy
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'flask-app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'        
+          ignore-unfixed: true    
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'          
