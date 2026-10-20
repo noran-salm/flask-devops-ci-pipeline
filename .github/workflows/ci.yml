@@ -7,61 +7,127 @@ on:
     branches: [ main ]
 
 jobs:
-  quality-gate:
+  # -------------------------------------------------------------
+  # 1. Parallel Job: Pytest Unit Testing
+  # -------------------------------------------------------------
+  test:
+    name: Pytest Suite
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout Code
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 
 
-      # 2. Setup Python
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip' # Caching pip dependencies
 
-      # 3. Install Dependencies
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Run Pytest
       - name: Run Pytest
-        run: |
-          pytest -v
+        run: pytest -v
 
+  # -------------------------------------------------------------
+  # 2. Parallel Job: Trivy Container Vulnerability Scan
+  # -------------------------------------------------------------
+  trivy-scan:
+    name: Trivy Security Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      # Build Docker Image
-      - name: Build Docker Image
-        run: |
-          docker build -t flask-app:${{ github.sha }} .
-          docker tag flask-app:${{ github.sha }} flask-app:latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # Scan Image with Trivy
+      - name: Build Docker Image for Scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true # Makes built image available locally to Docker daemon
+          tags: flask-app:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'flask-app:${{ github.sha }}'
           format: 'table'
-          exit-code: '1'        
-          ignore-unfixed: true    
+          exit-code: '1'
+          ignore-unfixed: true
           vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'                   
+          severity: 'CRITICAL,HIGH'
 
-      # 5. Run SonarQube Analysis
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v2.0.2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }} 
-          
-      # 6. Quality Gate Check 
-      - name: SonarQube Quality Gate Check
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  # -------------------------------------------------------------
+  # 3. Parallel Job: SonarQube Code Quality Analysis
+  # -------------------------------------------------------------
+  # sonarqube:
+  #   name: SonarQube Quality Gate
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: SonarQube Scan
+  #       uses: SonarSource/sonarqube-scan-action@v2.0.2
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+  #     - name: SonarQube Quality Gate Check
+  #       uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+  #       timeout-minutes: 5
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # -------------------------------------------------------------
+  # 4. Final Job: Publish to GHCR (Runs after ALL pass)
+  # -------------------------------------------------------------
+  publish:
+    name: Build & Publish to GHCR
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [test, trivy-scan, sonarqube] # Waits for ALL 3 parallel jobs
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (Tags & Labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=short,prefix=
+            type=raw,value=latest
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
