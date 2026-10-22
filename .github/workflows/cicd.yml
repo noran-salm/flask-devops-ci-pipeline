@@ -151,14 +151,14 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ vars.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Execute Deployment via Ansible
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible-playbook -i "${{ secrets.EC2_HOST }}," \
-            -u ${{ secrets.EC2_USERNAME }} \
+          ansible-playbook -i "${{ vars.EC2_HOST }}," \
+            -u ${{ vars.EC2_USERNAME }} \
             --private-key ~/.ssh/id_rsa \
             -e "image_tag=${{ github.sha }}" \
             -e "docker_username=${{ vars.DOCKERHUB_USERNAME }}" \
