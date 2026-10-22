@@ -13,12 +13,20 @@ resource "aws_security_group" "app_sg" {
   description = "Security group for ${var.env_name} environment"
 
   ingress {
-    description = "SSH from my IP only"
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+      description = "HTTP for Nginx Proxy"
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
 
   ingress {
     description = "App port from my IP only"
