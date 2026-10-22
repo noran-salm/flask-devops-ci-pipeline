@@ -2,8 +2,24 @@ services:
   web:
     image: ${DOCKER_USERNAME}/flask-app:${IMAGE_TAG}
     container_name: flask_app
-    ports:
-      - "5000:5000"
     restart: always
+    read_only: true         
+    tmpfs:
+      - /tmp  
+    cap_drop:
+      - ALL   
+    expose:
+      - "5000"           
     environment:
       - PORT=5000
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    ports:
+      - "80:80"                   # 🌐 تعريض البورت 80 المعتمد للخارج
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+    restart: always
