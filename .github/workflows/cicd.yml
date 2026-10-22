@@ -63,6 +63,13 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
+      - name: Run Checkov action
+        uses: bridgecrewio/checkov-action@master
+        with:
+          framework: dockerfile,terraform,yaml
+          output_format: cli
+          soft_fail: false      
+
   # -------------------------------------------------------------
   # 3. Parallel Job: SonarQube Code Quality Analysis
   # -------------------------------------------------------------
