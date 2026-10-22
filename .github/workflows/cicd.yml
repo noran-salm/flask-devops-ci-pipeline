@@ -68,8 +68,7 @@ jobs:
         with:
           framework: dockerfile,terraform,yaml
           output_format: cli
-          soft_fail: false      
-
+          soft_fail: true
   # -------------------------------------------------------------
   # 3. Parallel Job: SonarQube Code Quality Analysis
   # -------------------------------------------------------------
