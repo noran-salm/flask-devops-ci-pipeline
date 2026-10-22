@@ -315,7 +315,7 @@ Only Nginx (port 80) is published; Flask on 5000 remains internal.
 | Port | Source | Purpose |
 |---|---|---|
 | `80` | `0.0.0.0/0` | Public HTTP via Nginx |
-| `22` | Your IP only | Restricted SSH for Ansible |
+| `22` | `0.0.0.0/0` | SSH for CI/CD (Ansible) & Admin Access |
 | `5000` | *(no rule)* | Internal only, never exposed |
 
 3. Add the GitHub Secrets listed in the [pipeline section](#required-github-secrets).
