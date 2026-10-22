@@ -113,7 +113,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app
+          images: ${{ vars.DOCKERHUB_USERNAME }}/flask-app
           tags: |
             type=raw,value=${{ github.sha }}
             type=raw,value=latest
@@ -161,6 +161,6 @@ jobs:
             -u ${{ secrets.EC2_USERNAME }} \
             --private-key ~/.ssh/id_rsa \
             -e "image_tag=${{ github.sha }}" \
-            -e "docker_username=${{ secrets.DOCKERHUB_USERNAME }}" \
+            -e "docker_username=${{ vars.DOCKERHUB_USERNAME }}" \
             -e "docker_token=${{ secrets.DOCKERHUB_TOKEN }}" \
             ansible/deploy.yml
