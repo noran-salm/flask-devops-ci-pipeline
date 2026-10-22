@@ -60,7 +60,7 @@
 
     - name: Perform Smoke Test on Nginx Proxy (Port 80)
       ansible.builtin.uri:
-        url: "http://localhost:80/health"
+        url: "http://localhost:80/"
         status_code: 200
         return_content: yes
       register: health_check
