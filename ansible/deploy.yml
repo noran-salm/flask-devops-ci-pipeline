@@ -16,8 +16,16 @@
 
     - name: Copy docker-compose.yml to target host
       ansible.builtin.copy:
-        src: docker-compose.yml
+        src: ../docker-compose.yml
         dest: "{{ app_dir }}/docker-compose.yml"
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Copy nginx.conf to target host
+      ansible.builtin.copy:
+        src: ../nginx.conf
+        dest: "{{ app_dir }}/nginx.conf"
         owner: ubuntu
         group: ubuntu
         mode: '0644'
@@ -39,9 +47,9 @@
       ansible.builtin.pause:
         seconds: 5
 
-    - name: Perform Smoke Test on health endpoint
+    - name: Perform Smoke Test on Nginx Proxy (Port 80)
       ansible.builtin.uri:
-        url: "http://localhost:5000/"
+        url: "http://localhost:80/"
         status_code: 200
         return_content: yes
       register: health_check
@@ -59,5 +67,5 @@
 
     - name: Fail workflow if Smoke Test failed
       ansible.builtin.fail:
-        msg: "CRITICAL: Smoke test failed! Application is not responding on port 5000."
+        msg: "CRITICAL: Smoke test failed! Application is not responding on port 80."
       when: health_check.failed
