@@ -1,0 +1,63 @@
+---
+- name: Deploy Flask Application to EC2
+  hosts: all
+  become: true
+  vars:
+    app_dir: "/home/ubuntu/app"
+
+  tasks:
+    - name: Ensure deployment directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Copy docker-compose.yml to target host
+      ansible.builtin.copy:
+        src: ../docker-compose.yml
+        dest: "{{ app_dir }}/docker-compose.yml"
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Log in to Docker Hub
+      community.docker.docker_login:
+        username: "{{ docker_username }}"
+        password: "{{ docker_token }}"
+
+    - name: Pull latest SHA-tagged image and deploy via Docker Compose
+      ansible.builtin.shell: |
+        cd {{ app_dir }}
+        export DOCKER_USERNAME="{{ docker_username }}"
+        export IMAGE_TAG="{{ image_tag }}"
+        docker compose pull
+        docker compose up -d --remove-orphans
+
+    - name: Wait for application to warm up
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Perform Smoke Test on health endpoint
+      ansible.builtin.uri:
+        url: "http://localhost:5000/"
+        status_code: 200
+        return_content: yes
+      register: health_check
+      ignore_errors: true
+
+    - name: Fetch Docker logs if Smoke Test failed
+      ansible.builtin.command: docker logs flask_app
+      when: health_check.failed
+      register: app_logs
+
+    - name: Display container logs on failure
+      ansible.builtin.debug:
+        var: app_logs.stdout_lines
+      when: health_check.failed
+
+    - name: Fail workflow if Smoke Test failed
+      ansible.builtin.fail:
+        msg: "CRITICAL: Smoke test failed! Application is not responding on port 5000."
+      when: health_check.failed
