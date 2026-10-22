@@ -22,6 +22,17 @@
         group: ubuntu
         mode: '0644'
 
+    - name: Check if nginx.conf path is a directory
+      ansible.builtin.stat:
+        path: "{{ app_dir }}/nginx.conf"
+      register: nginx_conf_stat
+
+    - name: Auto-remove nginx.conf directory if created by Docker
+      ansible.builtin.file:
+        path: "{{ app_dir }}/nginx.conf"
+        state: absent
+      when: nginx_conf_stat.stat.exists and nginx_conf_stat.stat.isdir
+
     - name: Copy nginx.conf to target host
       ansible.builtin.copy:
         src: ../nginx.conf
