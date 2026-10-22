@@ -66,26 +66,26 @@ jobs:
   # -------------------------------------------------------------
   # 3. Parallel Job: SonarQube Code Quality Analysis
   # -------------------------------------------------------------
-  # sonarqube:
-  #   name: SonarQube Quality Gate
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+  sonarqube:
+    name: SonarQube Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  #     - name: SonarQube Scan
-  #       uses: SonarSource/sonarqube-scan-action@v2.0.2
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2.0.2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
-  #     - name: SonarQube Quality Gate Check
-  #       uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-  #       timeout-minutes: 5
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarQube Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # -------------------------------------------------------------
   # 4. Final Job: Publish to GHCR (Runs after ALL pass)
