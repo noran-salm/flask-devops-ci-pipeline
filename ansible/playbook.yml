@@ -61,3 +61,19 @@
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
         mode: '0755'
+
+    - name: Set sysctl vm.max_map_count for SonarQube Elasticsearch
+      ansible.posix.sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present
+        reload: yes
+
+    - name: Run SonarQube Container
+      community.docker.docker_container:
+        name: sonarqube
+        image: sonarqube:lts-community
+        state: started
+        restart_policy: always
+        published_ports:
+          - "9000:9000"        
